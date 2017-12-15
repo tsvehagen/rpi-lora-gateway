@@ -1,0 +1,36 @@
+version: '2'
+
+services:
+  gateway-bridge:
+    build:
+      context: https://github.com/tsvehagen/lora-gateway-bridge.git
+      dockerfile: Dockerfile.arm
+    restart: unless-stopped
+    expose:
+      - 1700/udp
+    logging:
+      driver: json-file
+      options:
+        max-size: "200k"
+        max-file: "10"
+    volumes:
+      - ./ca.crt:/ca.crt
+    environment:
+      - MQTT_SERVER=ssl://example.com:8883
+      - MQTT_USERNAME=loraserver_gw
+      - MQTT_PASSWORD=password
+      - MQTT_CA_CERT=/ca.crt
+
+  packet-forwarder:
+    build:
+      context: ./packet-forwarder
+    restart: unless-stopped
+    privileged: true
+    logging:
+      driver: json-file
+      options:
+        max-size: "200k"
+        max-file: "10"
+    volumes:
+      - /dev/ttyS0:/dev/ttyGPS
+      - ./local_conf.json:/lora/local_conf.json
